@@ -1,0 +1,27 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="zim_dbg_xdgmod" type="PythonConfigurationType" factoryName="Python">
+    <module name="zim-desktop-wiki" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="XDG_DATA_HOME" value="$PROJECT_DIR$/plugin_dev/data_home" />
+      <env name="XDG_CONFIG_HOME" value="$PROJECT_DIR$/plugin_dev/config_home" />
+      <env name="XDG_CONFIG_DIRS" value="$PROJECT_DIR$/plugin_dev/cfg_dirs" />
+      <env name="XDG_CACHE_HOME" value="$PROJECT_DIR$/plugin_dev/cache_home" />
+    </envs>
+    <option name="SDK_HOME" value="" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="IS_MODULE_SDK" value="true" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/zim.py" />
+    <option name="PARAMETERS" value="-D --standalone" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="MODULE_MODE" value="false" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
+    <method v="2" />
+  </configuration>
+</component>
