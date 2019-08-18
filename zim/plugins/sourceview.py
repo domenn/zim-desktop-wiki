@@ -65,6 +65,8 @@ shown as embedded widgets with syntax highlighting, line numbers etc.
 			# T: preference option for sourceview plugin
 		('highlight_current_line', 'bool', _('Highlight current line'), False),
 			# T: preference option for sourceview plugin
+		('default_linenumbers', 'bool', _('Show line numbers for new blocks by default'), True),
+			# T: preference option for sourceview plugin
 		('show_right_margin', 'bool', _('Show right margin'), False),
 			# T: preference option for sourceview plugin
 		('right_margin_position', 'int', _('Right margin position'), 72, (1, 1000)),
@@ -93,8 +95,12 @@ class SourceViewObjectType(InsertedObjectTypeExtension):
 	def __init__(self, plugin, objmap):
 		self._widgets = WeakSet()
 		self.preferences = plugin.preferences
+		self.refresh_self_preferences()
 		InsertedObjectTypeExtension.__init__(self, plugin, objmap)
 		self.connectto(self.preferences, 'changed', self.on_preferences_changed)
+
+	def refresh_self_preferences(self):
+		self.object_attr['linenumbers'] = Boolean(self.preferences['default_linenumbers'])
 
 	def new_model_interactive(self, parent, notebook, page):
 		lang = InsertCodeBlockDialog(parent).run()
@@ -119,6 +125,7 @@ class SourceViewObjectType(InsertedObjectTypeExtension):
 	def on_preferences_changed(self, preferences):
 		for widget in self._widgets:
 			widget.set_preferences(preferences)
+		self.refresh_self_preferences()
 
 	def format_html(self, dumper, attrib, data):
 		# to use highlight.js add the following to your template:
