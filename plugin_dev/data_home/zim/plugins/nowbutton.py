@@ -1,16 +1,26 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-from zim.gui.pageview import PageViewExtension
-from zim.notebook import NotebookExtension, Path
-from zim.gui.mainwindow import MainWindowExtension
-
+#
+# nowbutton.py
+#
+# A Zim plugin that jumps to today's journal entry, and appends the current *time* to the end of the file.
+# This makes it nearly trivial to keep a log with tighter-than-one-day granularity.
+#
+# Skeleton and basic operation of this script was DERIVED from zim 'quicknote' and 'tasklist' plugins.
+#
 from time import strftime
+import gtk
+
+
 from datetime import datetime, timedelta
+from datetime import date as dateclass
 from zim.config import StringAllowEmpty
 
+# TODO: kern out unneccesary imports
 from zim.plugins import PluginClass
 from zim.actions import action
+from zim.gui.pageview import PageViewExtension
+from zim.config import ConfigManager
 
 import logging
 
@@ -30,49 +40,11 @@ buttons.
 	}
 	plugin_preferences = (
 		('hours_past_midnight', 'int', _('Hours past Midnight'), 4, (0, 12)),
-		('timestamp_format', 'string', _('Timestamp format'), '%I:%M%p -', StringAllowEmpty)
-	)
-
-	global DAY, WEEK, MONTH, YEAR # Hack - to make sure translation is loaded
-	DAY = _('Day') # T: option value
-	WEEK = _('Week') # T: option value
-	MONTH = _('Month') # T: option value
-	YEAR = _('Year') # T: option value
-
-	# plugin_notebook_properties = (
-	# 	('namespace', 'string', _('Section'), ':Journal'), # T: input label
-	# 	('granularity', 'choice', _('Use a page for each'), DAY, (DAY, WEEK, MONTH, YEAR)), # T: preferences option, values will be "Day", "Month", ...
-	# )
-	plugin_notebook_properties = (
-		('namespace', 'string', 'Page', ':Journal', StringAllowEmpty),
-		# If I have only the first item in list, I get exception: to many values to unpack.
-		('qq', 'string', 'Ignored', ':Q11', StringAllowEmpty)
+		('timestamp_format', 'string', _('Timestamp format'), '%I:%M%p -', StringAllowEmpty),
 	)
 
 
-class NowBtnPageViewExtension(PageViewExtension):
-	def __init__(self, plugin, pageview):
-		PageViewExtension.__init__(self, plugin, pageview)
-		plugin.pv = pageview
-
-class NowBtnNotebookExtension(NotebookExtension):
-	def __init__(self, plugin, notebook):
-		NotebookExtension.__init__(self, plugin, notebook)
-
-		properties = self.plugin.notebook_properties(notebook)
-		plugin.p_namespace = properties['namespace']
-		plugin.notebook = notebook
-		logger.debug("Now Button: Journal at: " + plugin.p_namespace)
-		# if path.ischild(properties['namespace']) and daterange_from_path(path):
-		# 	return 'Journal'
-		# else:
-		# 	return None
-
-		# self.connectto_all(
-		# 	notebook, ('suggest-link', 'get-page-template', 'init-page-template')
-		# )
-
-class NowButtonMainWindowExtension(MainWindowExtension):
+class NowButtonMainWindowExtension(PageViewExtension):
 
 	uimanager_xml = '''
 		<ui>
@@ -91,54 +63,54 @@ class NowButtonMainWindowExtension(MainWindowExtension):
 		</ui>
 	'''
 
-	def __init__(self, plugin, window):
-		MainWindowExtension.__init__(self, plugin, window)
+	def __init__(self, plugin, pageview):
+		PageViewExtension.__init__(self, plugin, pageview)
 
 	@action(
 		_('Log Entry'),
-		icon='gtk-jump-to',
-		# readonly=True,
-		accelerator = '<Control><Shift>E'
+		'<Primary><Shift>E'
 	) # T: menu item
 	def now_button_clicked(self):
 
+		calendar_config=ConfigManager.preferences['JournalPlugin'];
+		calendar_namespace=calendar_config['namespace'];
+
 		offset_time=datetime.today()-timedelta(hours=self.plugin.preferences['hours_past_midnight'])
 
-		name = self.plugin.p_namespace
-
-		ui = self.window.uimanager
+		name=calendar_namespace.child(offset_time.strftime('%Y:%m:%d')).name;
 
 		text = '\n%s ' % strftime(self.plugin.preferences['timestamp_format']).lower();
-		name =  name + strftime(':%Y:%m:%d')
-		path=Path(name)
 
+		ui = self.pageview
+		try:
+			#v0.65
+			path=ui.notebook.resolve_path(name);
+		except AttributeError:
+			#v0.66
+			path=ui.notebook.pages.lookup_from_user_input(name);
 
-
-		nb = self.plugin.notebook
-		page = nb.get_page(path)
+		page=ui.notebook.get_page(path);
 
 		#ui.append_text_to_page(path, text)
 
 		if not page.exists():
-			parsetree = nb.get_template(page)
+			parsetree = ui.notebook.get_template(page)
 			page.set_parsetree(parsetree)
 
 		page.parse('wiki', text, append=True) # FIXME format hard coded ??? (this FIXME was copied from gui.__init__)
-		# ui.present(path)
-		nb.store_page(page)
-		self.window.open_page(page)
-
-
+		self.navigation.open_page(path)
+		ui.notebook.store_page(page);
 
 		# Move the cursor to the end of the line that was just appended...
-		textBuffer = self.plugin.pv.textview.get_buffer()
-
+		textBuffer = self.pageview.textview.get_buffer();
 		i = textBuffer.get_end_iter();
 		i.backward_visible_cursor_positions(1);
 		textBuffer.place_cursor(i);
+
 		# and finally... scroll the window all the way to the bottom.
-		self.window.pageview.scroll_cursor_on_screen();
+		self.pageview.scroll_cursor_on_screen();
 
 	def on_notebook_changed(self):
 		return None
+
 

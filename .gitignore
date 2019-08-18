@@ -96,3 +96,10 @@ ENV/
 # debian pybuild
 .pybuild/
 debian/python-module-stampdir/
+
+# domen: my things.
+.idea/*
+!.idea/runConfigurations/
+
+plugin_dev/*
+!plugin_dev/data_home/zim/plugins/nowbutton.py
